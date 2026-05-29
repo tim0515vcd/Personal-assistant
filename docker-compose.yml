@@ -1,0 +1,50 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-assistant}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-assistant}
+      POSTGRES_DB: ${POSTGRES_DB:-assistant}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U assistant"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redisdata:/data
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-assistant}:${POSTGRES_PASSWORD:-assistant}@db:5432/${POSTGRES_DB:-assistant}
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app   # hot-reload
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      INTERNAL_API_URL: http://backend:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  pgdata:
+  redisdata:
