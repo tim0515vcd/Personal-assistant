@@ -20,7 +20,7 @@ export function NavLinks() {
   return (
     <>
       {plugins
-        ?.filter((p) => p.nav_path)
+        ?.filter((p) => p.nav_path && p.show_nav)
         .map((p) => {
           const Icon = ICONS[p.name] ?? CloudSun;
           return (

@@ -185,6 +185,37 @@ export const cycleApi = {
     apiFetch(`/api/plugins/cycle/records/${id}`, { method: "DELETE" }),
 };
 
+// ── Weather ─────────────────────────────────────────────────
+
+export interface DayForecast {
+  date: string;
+  weather_code: number;
+  weather_desc: string;
+  weather_icon: string;
+  temp_max: number;
+  temp_min: number;
+  precipitation_prob: number;
+}
+
+export interface WeatherData {
+  city: string;
+  temperature: number;
+  apparent_temperature: number;
+  humidity: number;
+  wind_speed: number;
+  weather_code: number;
+  weather_desc: string;
+  weather_icon: string;
+  forecast: DayForecast[];
+}
+
+export const weatherApi = {
+  get: (city?: string) =>
+    apiFetch<WeatherData>(
+      `/api/plugins/weather/weather${city ? `?city=${encodeURIComponent(city)}` : ""}`
+    ),
+};
+
 export const reminderApi = {
   list: () => apiFetch<ReminderItem[]>("/api/plugins/reminder/items"),
   create: (name: string, freq_days: number, category?: string) =>

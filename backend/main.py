@@ -106,17 +106,19 @@ async def list_plugins():
 
     result = []
     for p in plugins_list:
-        enabled  = (await get_setting(f"plugin.{p.name}.enabled",  "true")) == "true"
+        enabled = (await get_setting(f"plugin.{p.name}.enabled", "true")) == "true"
         show_nav = (await get_setting(f"plugin.{p.name}.show_nav", "true")) == "true"
-        result.append({
-            "name": p.name,
-            "display": p.display,
-            "description": p.description,
-            "version": p.version,
-            "enabled": enabled,
-            "show_nav": show_nav,
-            "nav_path": p.get_nav_path() if (enabled and show_nav) else "",
-        })
+        result.append(
+            {
+                "name": p.name,
+                "display": p.display,
+                "description": p.description,
+                "version": p.version,
+                "enabled": enabled,
+                "show_nav": show_nav,
+                "nav_path": p.get_nav_path() if enabled else "",
+            }
+        )
     return result
 
 
