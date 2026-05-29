@@ -108,6 +108,8 @@ export interface ReminderItem {
   last_done: string | null;
   days_since: number | null;
   is_overdue: boolean;
+  target_count: number;
+  current_count: number;
 }
 
 // ── Settings ───────────────────────────────────────────────
@@ -218,14 +220,14 @@ export const weatherApi = {
 
 export const reminderApi = {
   list: () => apiFetch<ReminderItem[]>("/api/plugins/reminder/items"),
-  create: (name: string, freq_days: number, category?: string) =>
+  create: (name: string, freq_days: number, category?: string, target_count?: number) =>
     apiFetch<ReminderItem>("/api/plugins/reminder/items", {
       method: "POST",
-      body: JSON.stringify({ name, freq_days, category }),
+      body: JSON.stringify({ name, freq_days, category, target_count: target_count ?? 1 }),
     }),
   done: (id: number) =>
     apiFetch<ReminderItem>(`/api/plugins/reminder/items/${id}/done`, { method: "POST" }),
-  update: (id: number, data: { freq_days?: number; category?: string; last_done?: string }) =>
+  update: (id: number, data: { freq_days?: number; category?: string; last_done?: string; target_count?: number }) =>
     apiFetch<ReminderItem>(`/api/plugins/reminder/items/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),

@@ -7,6 +7,18 @@ import { reminderApi, type ReminderItem } from "@/lib/api";
 const fetcher = () => reminderApi.list();
 
 function statusInfo(m: ReminderItem) {
+  if (m.target_count > 1) {
+    const done = m.current_count >= m.target_count;
+    return {
+      label: `${m.current_count}/${m.target_count} 次`,
+      badge: done
+        ? "bg-emerald-100 text-emerald-700"
+        : m.current_count > 0
+        ? "bg-amber-100 text-amber-700"
+        : "bg-red-100 text-red-700",
+      ring: done ? "" : m.current_count > 0 ? "ring-1 ring-amber-200" : "ring-1 ring-red-200",
+    };
+  }
   if (m.is_overdue) {
     return {
       label: m.days_since === null ? "從未完成" : `${m.days_since} 天未完成`,
@@ -32,6 +44,7 @@ export default function ReminderPage() {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [freqDays, setFreqDays] = useState(7);
+  const [targetCount, setTargetCount] = useState(1);
   const [saving, setSaving] = useState(false);
   const [doing, setDoing] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -41,6 +54,7 @@ export default function ReminderPage() {
     setName(m.name);
     setCategory(m.category ?? "");
     setFreqDays(FREQ_OPTIONS.includes(m.freq_days) ? m.freq_days : 7);
+    setTargetCount(m.target_count);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -49,6 +63,7 @@ export default function ReminderPage() {
     setName("");
     setCategory("");
     setFreqDays(7);
+    setTargetCount(1);
   }
 
   async function handleSave() {
@@ -58,15 +73,16 @@ export default function ReminderPage() {
       await reminderApi.update(editingId, {
         freq_days: freqDays,
         category: category.trim() || undefined,
+        target_count: targetCount,
       });
-      // name 不支援透過 update 改，若要改名只能刪掉重建 — 這邊先支援改 freq/category
       setEditingId(null);
     } else {
-      await reminderApi.create(name.trim(), freqDays, category.trim() || undefined);
+      await reminderApi.create(name.trim(), freqDays, category.trim() || undefined, targetCount);
     }
     setName("");
     setCategory("");
     setFreqDays(7);
+    setTargetCount(1);
     await mutate();
     setSaving(false);
   }
@@ -149,6 +165,18 @@ export default function ReminderPage() {
               <option key={d} value={d}>{FREQ_LABELS[d]}</option>
             ))}
           </select>
+          <div className="flex items-center gap-1.5 border border-slate-200 rounded-lg px-3 py-2 bg-white">
+            <span className="text-xs text-slate-500 whitespace-nowrap">需完成</span>
+            <input
+              type="number"
+              min={1}
+              max={99}
+              value={targetCount}
+              onChange={(e) => setTargetCount(Math.max(1, Number(e.target.value)))}
+              className="w-10 text-sm text-center outline-none focus:ring-2 focus:ring-violet-300 rounded"
+            />
+            <span className="text-xs text-slate-500">次</span>
+          </div>
           <button
             onClick={handleSave}
             disabled={saving || !name.trim()}
@@ -171,6 +199,9 @@ export default function ReminderPage() {
         {sorted.map((m) => {
           const s = statusInfo(m);
           const isEditing = editingId === m.id;
+          const isDone = m.target_count > 1
+            ? m.current_count >= m.target_count
+            : !m.is_overdue && m.days_since === 0;
           return (
             <div
               key={m.id}
@@ -188,16 +219,18 @@ export default function ReminderPage() {
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.badge}`}>{s.label}</span>
                 </div>
                 <div className="text-xs text-slate-400 mt-1">
-                  每 {m.freq_days} 天 ·{" "}
-                  {m.days_since === null ? "從未完成" : m.days_since === 0 ? "今天已完成" : `${m.days_since} 天前`}
+                  {m.target_count > 1
+                    ? `每 ${m.freq_days} 天 · 目標 ${m.target_count} 次`
+                    : `每 ${m.freq_days} 天 · ${m.days_since === null ? "從未完成" : m.days_since === 0 ? "今天已完成" : `${m.days_since} 天前`}`
+                  }
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">
                 <button
                   onClick={() => handleDone(m.id)}
-                  disabled={doing === m.id}
-                  title="標記今天已完成"
-                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors disabled:opacity-40"
+                  disabled={doing === m.id || isDone}
+                  title={isDone ? "本週期已完成" : "標記完成一次"}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors disabled:opacity-40 ${isDone ? "bg-emerald-100 text-emerald-600 cursor-default" : "bg-emerald-50 hover:bg-emerald-100 text-emerald-600"}`}
                 >
                   <Check size={15} />
                 </button>
