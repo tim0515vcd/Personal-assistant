@@ -21,8 +21,8 @@
 ```bash
 cp .env.example .env
 # 編輯 .env，填入以下變數：
-# LINE_CHANNEL_SECRET=...    （選填，LINE Bot）
 # TELEGRAM_BOT_TOKEN=...     （選填，可在 Web 設定頁填入）
+# CORS_ORIGINS=http://localhost:3000,http://你的IP:3000  （從其他裝置存取時填入）
 ```
 
 ### 2. 啟動所有服務
@@ -94,6 +94,20 @@ docker compose up --build
 **Web UI 功能：**
 - 月曆視圖，標記排卵日、易孕期、月經期、今天
 - 可設定預設週期天數與月經天數
+
+### 天氣（weather）
+查詢目前天氣與未來 4 天預報（Open-Meteo，免費無需 API Key）。
+
+**Telegram 指令：**
+```
+天氣          → 查詢預設城市天氣
+天氣 高雄     → 查詢指定城市
+```
+
+**Web UI 功能：**
+- 即時氣溫、體感溫度、濕度、風速
+- 4 天預報（天氣圖示、高低溫、降雨機率）
+- 可在設定頁設定預設城市
 
 ### 系統設定（settings）
 - Telegram Bot Token 設定與重新連線
@@ -198,7 +212,7 @@ personal-assistant/
 │       ├── expense/             # 記帳（多帳戶、Excel 匯入匯出）
 │       ├── cycle/               # 排卵期計算
 │       ├── settings/            # 系統設定
-│       └── weather/             # 天氣（骨架）
+│       └── weather/             # 天氣（Open-Meteo）
 ├── frontend/
 │   ├── app/
 │   │   ├── page.tsx             # Plugin 管理首頁
@@ -207,7 +221,9 @@ personal-assistant/
 │   │   └── plugins/
 │   │       ├── reminder/
 │   │       ├── fuel/
+│   │       ├── expense/
 │   │       ├── cycle/
+│   │       ├── weather/
 │   │       └── settings/
 │   └── lib/api.ts               # API 請求封裝
 ├── docker-compose.yml
