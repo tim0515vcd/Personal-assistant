@@ -1,6 +1,6 @@
 "use client";
 import useSWR from "swr";
-import { Bell, Fuel, Heart, CloudSun, type LucideIcon } from "lucide-react";
+import { Bell, Fuel, Heart, CloudSun, Wallet, type LucideIcon } from "lucide-react";
 import { pluginApi, type Plugin } from "@/lib/api";
 
 const ICONS: Record<string, LucideIcon> = {
@@ -8,6 +8,7 @@ const ICONS: Record<string, LucideIcon> = {
   fuel: Fuel,
   cycle: Heart,
   weather: CloudSun,
+  expense: Wallet,
 };
 
 export function NavLinks() {

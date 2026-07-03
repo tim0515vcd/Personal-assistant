@@ -98,6 +98,90 @@ export const fuelApi = {
     apiFetch(`/api/plugins/fuel/records/${id}`, { method: "DELETE" }),
 };
 
+// ── Expense ────────────────────────────────────────────────
+
+export interface ExpenseAccount {
+  id: number;
+  name: string;
+  is_default: boolean;
+  record_count: number;
+}
+
+export interface ExpenseRecord {
+  id: number;
+  date: string;
+  amount: number;
+  category: string | null;
+  note: string | null;
+  account_id: number | null;
+  account_name: string | null;
+}
+
+export interface ExpenseSummary {
+  total: number;
+  count: number;
+  prev_total: number;
+  by_category: { category: string; amount: number; count: number }[];
+  monthly: { month: string; total: number }[];
+}
+
+export interface ExpenseImportResult {
+  accounts_created: number;
+  categories_created: number;
+  imported: number;
+  skipped: number;
+}
+
+export const expenseAccountApi = {
+  list: () => apiFetch<ExpenseAccount[]>("/api/plugins/expense/accounts"),
+  create: (name: string) =>
+    apiFetch<ExpenseAccount>("/api/plugins/expense/accounts", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }),
+  update: (id: number, name: string) =>
+    apiFetch<ExpenseAccount>(`/api/plugins/expense/accounts/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+    }),
+  remove: (id: number) =>
+    apiFetch(`/api/plugins/expense/accounts/${id}`, { method: "DELETE" }),
+  setDefault: (id: number) =>
+    apiFetch<ExpenseAccount>(`/api/plugins/expense/accounts/${id}/default`, { method: "POST" }),
+};
+
+export const expenseApi = {
+  records: (year: number, month: number, account_id?: number) =>
+    apiFetch<ExpenseRecord[]>(
+      `/api/plugins/expense/records?year=${year}&month=${month}${account_id !== undefined ? `&account_id=${account_id}` : ""}`
+    ),
+  create: (data: { amount: number; category?: string; note?: string; date?: string; account_id?: number }) =>
+    apiFetch<ExpenseRecord>("/api/plugins/expense/records", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  update: (id: number, data: { amount?: number; category?: string; note?: string; date?: string; account_id?: number }) =>
+    apiFetch<ExpenseRecord>(`/api/plugins/expense/records/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  remove: (id: number) =>
+    apiFetch(`/api/plugins/expense/records/${id}`, { method: "DELETE" }),
+  summary: (year: number, month: number, account_id?: number) =>
+    apiFetch<ExpenseSummary>(
+      `/api/plugins/expense/summary?year=${year}&month=${month}${account_id !== undefined ? `&account_id=${account_id}` : ""}`
+    ),
+  categories: () => apiFetch<string[]>("/api/plugins/expense/categories"),
+  importExcel: async (file: File): Promise<ExpenseImportResult> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/plugins/expense/import", { method: "POST", body: fd });
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    return res.json();
+  },
+  exportUrl: "/api/plugins/expense/export",
+};
+
 // ── Reminder ───────────────────────────────────────────────
 
 export interface ReminderItem {
